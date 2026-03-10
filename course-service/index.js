@@ -5,15 +5,9 @@ const db = require("./db");
 const app = express();
 app.use(express.json());
 
-/* SERVICE STATUS */
-
-app.get("/", (req,res)=>{
- res.send("Course Service Running");
-});
-
 /* GET ALL COURSES */
 
-app.get("/courses",(req,res)=>{
+app.get("/", (req,res)=>{
 
  const sql = "SELECT * FROM courses";
 
@@ -31,9 +25,9 @@ app.get("/courses",(req,res)=>{
 
 /* CREATE COURSE */
 
-app.post("/courses",(req,res)=>{
+app.post("/",(req,res)=>{
 
- const {name, credits} = req.body;
+ const {name,credits} = req.body;
 
  if(!name || !credits){
   return res.status(400).json({message:"Missing fields"});
@@ -47,7 +41,10 @@ app.post("/courses",(req,res)=>{
    return res.status(500).json(err);
   }
 
-  res.json({message:"Course created"});
+  res.json({
+   message:"Course created",
+   id: result.insertId
+  });
 
  });
 
@@ -55,12 +52,12 @@ app.post("/courses",(req,res)=>{
 
 /* UPDATE COURSE */
 
-app.put("/courses/:id",(req,res)=>{
+app.put("/:id",(req,res)=>{
 
  const {id} = req.params;
  const {name,credits} = req.body;
 
- const sql = "UPDATE courses SET name=?,credits=? WHERE id=?";
+ const sql = "UPDATE courses SET name=?, credits=? WHERE id=?";
 
  db.query(sql,[name,credits,id],(err,result)=>{
 
@@ -76,7 +73,7 @@ app.put("/courses/:id",(req,res)=>{
 
 /* DELETE COURSE */
 
-app.delete("/courses/:id",(req,res)=>{
+app.delete("/:id",(req,res)=>{
 
  const {id} = req.params;
 

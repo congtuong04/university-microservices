@@ -1,4 +1,5 @@
 require("dotenv").config();
+
 const express = require("express");
 const db = require("./db");
 
@@ -8,12 +9,6 @@ app.use(express.json());
 /* SERVICE STATUS */
 
 app.get("/", (req,res)=>{
- res.send("Student Service Running");
-});
-
-/* GET ALL STUDENTS */
-
-app.get("/students",(req,res)=>{
 
  const sql = "SELECT * FROM students";
 
@@ -31,7 +26,7 @@ app.get("/students",(req,res)=>{
 
 /* CREATE STUDENT */
 
-app.post("/students",(req,res)=>{
+app.post("/",(req,res)=>{
 
  const {name,email} = req.body;
 
@@ -47,7 +42,10 @@ app.post("/students",(req,res)=>{
    return res.status(500).json(err);
   }
 
-  res.json({message:"Student created"});
+  res.json({
+   message:"Student created",
+   id: result.insertId
+  });
 
  });
 
@@ -55,12 +53,12 @@ app.post("/students",(req,res)=>{
 
 /* UPDATE STUDENT */
 
-app.put("/students/:id",(req,res)=>{
+app.put("/:id",(req,res)=>{
 
  const {id} = req.params;
  const {name,email} = req.body;
 
- const sql = "UPDATE students SET name=?,email=? WHERE id=?";
+ const sql = "UPDATE students SET name=?, email=? WHERE id=?";
 
  db.query(sql,[name,email,id],(err,result)=>{
 
@@ -76,7 +74,7 @@ app.put("/students/:id",(req,res)=>{
 
 /* DELETE STUDENT */
 
-app.delete("/students/:id",(req,res)=>{
+app.delete("/:id",(req,res)=>{
 
  const {id} = req.params;
 
@@ -94,8 +92,12 @@ app.delete("/students/:id",(req,res)=>{
 
 });
 
+/* START SERVER */
+
 const PORT = process.env.PORT || 5002;
 
 app.listen(PORT,()=>{
+
  console.log("Student Service running on port " + PORT);
+
 });
