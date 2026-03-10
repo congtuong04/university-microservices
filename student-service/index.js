@@ -9,6 +9,12 @@ app.use(express.json());
 /* SERVICE STATUS */
 
 app.get("/", (req,res)=>{
+ res.json({message:"Student Service Running"});
+});
+
+/* GET ALL STUDENTS */
+
+app.get("/students",(req,res)=>{
 
  const sql = "SELECT * FROM students";
 
@@ -21,9 +27,7 @@ app.get("/", (req,res)=>{
   res.json(result);
 
  });
-
 });
-
 /* CREATE STUDENT */
 
 app.post("/",(req,res)=>{
