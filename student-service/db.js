@@ -10,17 +10,13 @@ function connectDB(){
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: process.env.DB_PORT || 3306,
-
-  ssl: {
-    rejectUnauthorized: false
-  }
-
+  connectTimeout: 10000
  });
 
  db.connect((err)=>{
 
   if(err){
-   console.log("Waiting for MySQL...", err.message);
+   console.log("Waiting for MySQL...");
    setTimeout(connectDB,3000);
    return;
   }
