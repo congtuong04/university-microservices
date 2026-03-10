@@ -71,6 +71,8 @@ app.delete("/teachers/:id",(req,res)=>{
 
 });
 
-app.listen(5004,()=>{
- console.log("Teacher Service running on port 5004");
+const PORT = process.env.PORT || 5004;
+
+app.listen(PORT,()=>{
+ console.log("Teacher Service running on port " + PORT);
 });

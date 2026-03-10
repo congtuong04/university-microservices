@@ -51,6 +51,8 @@ app.post("/admins",(req,res)=>{
 
 });
 
-app.listen(5005,()=>{
- console.log("Admin Service running on port 5005");
+const PORT = process.env.PORT || 5005;
+
+app.listen(PORT,()=>{
+ console.log("Admin Service running on port " + PORT);
 });
