@@ -15,13 +15,14 @@ function connectDB(){
 
  db.connect((err)=>{
 
-  if(err){
-   console.log("Waiting for MySQL...");
-   setTimeout(connectDB,3000);
-   return;
-  }
+ if(err){
+  console.log("MySQL error:", err.message);
+  console.log("Waiting for MySQL...");
+  setTimeout(connectDB,3000);
+  return;
+ }
 
-  console.log("Student DB Connected");
+ console.log("Student DB Connected");
 
  });
 
