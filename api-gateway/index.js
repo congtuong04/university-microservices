@@ -19,23 +19,23 @@ app.use((req, res, next) => {
 const services = [
  {
   route: "/auth",
-  target: "http://auth-service:5001"
+  target: process.env.AUTH_SERVICE_URL
  },
  {
   route: "/students",
-  target: "http://student-service:5002"
+  target: process.env.STUDENT_SERVICE_URL
  },
  {
   route: "/courses",
-  target: "http://course-service:5003"
+  target: process.env.COURSE_SERVICE_URL
  },
  {
   route: "/teachers",
-  target: "http://teacher-service:5004"
+  target: process.env.TEACHER_SERVICE_URL
  },
  {
   route: "/admins",
-  target: "http://admin-service:5005"
+  target: process.env.ADMIN_SERVICE_URL
  }
 ];
 
@@ -47,7 +47,10 @@ services.forEach(service => {
   service.route,
   createProxyMiddleware({
    target: service.target,
-   changeOrigin: true
+   changeOrigin: true,
+   pathRewrite: {
+    [`^${service.route}`]: ""
+   }
   })
  );
 

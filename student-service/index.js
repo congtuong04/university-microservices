@@ -14,23 +14,27 @@ app.get("/", (req,res)=>{
 
 /* GET ALL STUDENTS */
 
-app.get("/students",(req,res)=>{
+app.get("/students", async (req,res)=>{
 
- const sql = "SELECT * FROM students";
+ try{
 
- db.query(sql,(err,result)=>{
+  const sql = "SELECT * FROM students";
 
-  if(err){
-   return res.status(500).json(err);
-  }
+  const result = await db.query(sql);
 
-  res.json(result);
+  res.json(result.rows);
 
- });
+ }catch(err){
+
+  res.status(500).json({error: err.message});
+
+ }
+
 });
+
 /* CREATE STUDENT */
 
-app.post("/",(req,res)=>{
+app.post("/", async (req,res)=>{
 
  const {name,email} = req.body;
 
@@ -38,61 +42,67 @@ app.post("/",(req,res)=>{
   return res.status(400).json({message:"Missing fields"});
  }
 
- const sql = "INSERT INTO students (name,email) VALUES (?,?)";
+ try{
 
- db.query(sql,[name,email],(err,result)=>{
+  const sql = "INSERT INTO students (name,email) VALUES ($1,$2) RETURNING id";
 
-  if(err){
-   return res.status(500).json(err);
-  }
+  const result = await db.query(sql,[name,email]);
 
   res.json({
    message:"Student created",
-   id: result.insertId
+   id: result.rows[0].id
   });
 
- });
+ }catch(err){
+
+  res.status(500).json({error: err.message});
+
+ }
 
 });
 
 /* UPDATE STUDENT */
 
-app.put("/:id",(req,res)=>{
+app.put("/:id", async (req,res)=>{
 
  const {id} = req.params;
  const {name,email} = req.body;
 
- const sql = "UPDATE students SET name=?, email=? WHERE id=?";
+ try{
 
- db.query(sql,[name,email,id],(err,result)=>{
+  const sql = "UPDATE students SET name=$1, email=$2 WHERE id=$3";
 
-  if(err){
-   return res.status(500).json(err);
-  }
+  await db.query(sql,[name,email,id]);
 
   res.json({message:"Student updated"});
 
- });
+ }catch(err){
+
+  res.status(500).json({error: err.message});
+
+ }
 
 });
 
 /* DELETE STUDENT */
 
-app.delete("/:id",(req,res)=>{
+app.delete("/:id", async (req,res)=>{
 
  const {id} = req.params;
 
- const sql = "DELETE FROM students WHERE id=?";
+ try{
 
- db.query(sql,[id],(err,result)=>{
+  const sql = "DELETE FROM students WHERE id=$1";
 
-  if(err){
-   return res.status(500).json(err);
-  }
+  await db.query(sql,[id]);
 
   res.json({message:"Student deleted"});
 
- });
+ }catch(err){
+
+  res.status(500).json({error: err.message});
+
+ }
 
 });
 

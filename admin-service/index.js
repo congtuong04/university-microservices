@@ -7,25 +7,27 @@ app.use(express.json());
 
 /* GET ALL ADMINS */
 
-app.get("/", (req,res)=>{
+app.get("/", async (req,res)=>{
 
- const sql = "SELECT * FROM admins";
+ try{
 
- db.query(sql,(err,result)=>{
+  const sql = "SELECT * FROM admins";
 
-  if(err){
-   return res.status(500).json(err);
-  }
+  const result = await db.query(sql);
 
-  res.json(result);
+  res.json(result.rows);
 
- });
+ }catch(err){
+
+  res.status(500).json({error:err.message});
+
+ }
 
 });
 
 /* CREATE ADMIN */
 
-app.post("/",(req,res)=>{
+app.post("/", async (req,res)=>{
 
  const {name,email} = req.body;
 
@@ -33,61 +35,67 @@ app.post("/",(req,res)=>{
   return res.status(400).json({message:"Missing fields"});
  }
 
- const sql = "INSERT INTO admins (name,email) VALUES (?,?)";
+ try{
 
- db.query(sql,[name,email],(err,result)=>{
+  const sql = "INSERT INTO admins (name,email) VALUES ($1,$2) RETURNING id";
 
-  if(err){
-   return res.status(500).json(err);
-  }
+  const result = await db.query(sql,[name,email]);
 
   res.json({
    message:"Admin created",
-   id: result.insertId
+   id: result.rows[0].id
   });
 
- });
+ }catch(err){
+
+  res.status(500).json({error:err.message});
+
+ }
 
 });
 
 /* UPDATE ADMIN */
 
-app.put("/:id",(req,res)=>{
+app.put("/:id", async (req,res)=>{
 
  const {id} = req.params;
  const {name,email} = req.body;
 
- const sql = "UPDATE admins SET name=?, email=? WHERE id=?";
+ try{
 
- db.query(sql,[name,email,id],(err,result)=>{
+  const sql = "UPDATE admins SET name=$1, email=$2 WHERE id=$3";
 
-  if(err){
-   return res.status(500).json(err);
-  }
+  await db.query(sql,[name,email,id]);
 
   res.json({message:"Admin updated"});
 
- });
+ }catch(err){
+
+  res.status(500).json({error:err.message});
+
+ }
 
 });
 
 /* DELETE ADMIN */
 
-app.delete("/:id",(req,res)=>{
+app.delete("/:id", async (req,res)=>{
 
  const {id} = req.params;
 
- const sql = "DELETE FROM admins WHERE id=?";
+ try{
 
- db.query(sql,[id],(err,result)=>{
+  const sql = "DELETE FROM admins WHERE id=$1";
 
-  if(err){
-   return res.status(500).json(err);
-  }
+  await db.query(sql,[id]);
 
   res.json({message:"Admin deleted"});
 
- });
+ }catch(err){
+
+  res.status(500).json({error:err.message});
+
+ }
 
 });
 

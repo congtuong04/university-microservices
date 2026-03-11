@@ -1,33 +1,20 @@
-const mysql = require("mysql2");
+const { Pool } = require("pg");
 
-let db;
+const pool = new Pool({
+ connectionString: process.env.DATABASE_URL,
+ ssl: {
+  rejectUnauthorized: false
+ }
+});
 
-function connectDB(){
-
- db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: "admin_db",
-  port: process.env.DB_PORT || 3306
- });
-
- db.connect((err)=>{
-
-  if(err){
-   console.log("Waiting for MySQL...");
-   setTimeout(connectDB,3000);
-   return;
-  }
-
+pool.connect()
+ .then(() => {
   console.log("Admin DB Connected");
-
+ })
+ .catch(err => {
+  console.error("PostgreSQL error:", err.message);
  });
-
-}
-
-connectDB();
 
 module.exports = {
- query: (...args)=>db.query(...args)
+ query: (text, params) => pool.query(text, params)
 };

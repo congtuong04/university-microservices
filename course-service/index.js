@@ -1,98 +1,125 @@
 require("dotenv").config();
+
 const express = require("express");
 const db = require("./db");
 
 const app = express();
 app.use(express.json());
 
-/* GET ALL COURSES */
+/* SERVICE STATUS */
 
 app.get("/", (req,res)=>{
+ res.json({message:"Course Service Running"});
+});
 
- const sql = "SELECT * FROM courses";
+/* GET ALL COURSES */
 
- db.query(sql,(err,result)=>{
+app.get("/courses", async (req,res)=>{
 
-  if(err){
-   return res.status(500).json(err);
-  }
+ try{
 
-  res.json(result);
+  const sql = "SELECT * FROM courses";
 
- });
+  const result = await db.query(sql);
+
+  res.json(result.rows);
+
+ }catch(err){
+
+  res.status(500).json({error:err.message});
+
+ }
 
 });
 
 /* CREATE COURSE */
 
-app.post("/",(req,res)=>{
+app.post("/courses", async (req,res)=>{
 
- const {name,credits} = req.body;
+ const {title,description} = req.body;
 
- if(!name || !credits){
+ if(!title){
   return res.status(400).json({message:"Missing fields"});
  }
 
- const sql = "INSERT INTO courses (name,credits) VALUES (?,?)";
+ try{
 
- db.query(sql,[name,credits],(err,result)=>{
+  const sql = `
+   INSERT INTO courses (title,description)
+   VALUES ($1,$2)
+   RETURNING id
+  `;
 
-  if(err){
-   return res.status(500).json(err);
-  }
+  const result = await db.query(sql,[title,description]);
 
   res.json({
    message:"Course created",
-   id: result.insertId
+   id: result.rows[0].id
   });
 
- });
+ }catch(err){
+
+  res.status(500).json({error:err.message});
+
+ }
 
 });
 
 /* UPDATE COURSE */
 
-app.put("/:id",(req,res)=>{
+app.put("/courses/:id", async (req,res)=>{
 
  const {id} = req.params;
- const {name,credits} = req.body;
+ const {title,description} = req.body;
 
- const sql = "UPDATE courses SET name=?, credits=? WHERE id=?";
+ try{
 
- db.query(sql,[name,credits,id],(err,result)=>{
+  const sql = `
+   UPDATE courses
+   SET title=$1, description=$2
+   WHERE id=$3
+  `;
 
-  if(err){
-   return res.status(500).json(err);
-  }
+  await db.query(sql,[title,description,id]);
 
   res.json({message:"Course updated"});
 
- });
+ }catch(err){
+
+  res.status(500).json({error:err.message});
+
+ }
 
 });
 
 /* DELETE COURSE */
 
-app.delete("/:id",(req,res)=>{
+app.delete("/courses/:id", async (req,res)=>{
 
  const {id} = req.params;
 
- const sql = "DELETE FROM courses WHERE id=?";
+ try{
 
- db.query(sql,[id],(err,result)=>{
+  const sql = "DELETE FROM courses WHERE id=$1";
 
-  if(err){
-   return res.status(500).json(err);
-  }
+  await db.query(sql,[id]);
 
   res.json({message:"Course deleted"});
 
- });
+ }catch(err){
+
+  res.status(500).json({error:err.message});
+
+ }
 
 });
 
-const PORT = process.env.PORT || 5003;
+/* START SERVER */
+
+const PORT = process.env.PORT || 5004;
 
 app.listen(PORT,()=>{
+
  console.log("Course Service running on port " + PORT);
+
 });

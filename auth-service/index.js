@@ -13,164 +13,164 @@ const JWT_SECRET = process.env.JWT_SECRET || "mysecret";
 /* -----------------------------
    ROOT
 ------------------------------ */
+
 app.get("/", (req, res) => {
-  res.send("Auth Service Running");
+ res.send("Auth Service Running");
 });
 
 /* -----------------------------
    TEST DATABASE
 ------------------------------ */
-app.get("/test-db", (req, res) => {
 
-  db.query("SELECT 1", (err, result) => {
+app.get("/test-db", async (req, res) => {
 
-    if (err) {
-      console.log("Database error:", err);
-      return res.status(500).json({ message: "Database connection failed" });
-    }
+ try{
 
-    res.json({
-      message: "Database connected",
-      result
-    });
+  const result = await db.query("SELECT 1");
 
+  res.json({
+   message:"Database connected",
+   result: result.rows
   });
+
+ }catch(err){
+
+  console.log("Database error:",err);
+
+  res.status(500).json({
+   message:"Database connection failed"
+  });
+
+ }
 
 });
 
 /* -----------------------------
    REGISTER USER
 ------------------------------ */
-app.post("/register", async (req, res) => {
 
-  const { name, email, password } = req.body;
+app.post("/register", async (req,res)=>{
 
-  if (!name || !email || !password) {
-    return res.status(400).json({
-      message: "Name, email and password are required"
-    });
+ const {name,email,password} = req.body;
+
+ if(!name || !email || !password){
+  return res.status(400).json({
+   message:"Name, email and password are required"
+  });
+ }
+
+ try{
+
+  /* CHECK EMAIL */
+
+  const userCheck = await db.query(
+   "SELECT * FROM users WHERE email=$1",
+   [email]
+  );
+
+  if(userCheck.rows.length > 0){
+   return res.status(400).json({
+    message:"Email already exists"
+   });
   }
 
-  try {
+  /* HASH PASSWORD */
 
-    // kiểm tra email tồn tại
-    db.query(
-      "SELECT * FROM users WHERE email=?",
-      [email],
-      async (err, result) => {
+  const hashedPassword = await bcrypt.hash(password,10);
 
-        if (err) {
-          console.log(err);
-          return res.status(500).json({ message: "Database error" });
-        }
+  /* INSERT USER */
 
-        if (result.length > 0) {
-          return res.status(400).json({
-            message: "Email already exists"
-          });
-        }
+  await db.query(
+   "INSERT INTO users (name,email,password) VALUES ($1,$2,$3)",
+   [name,email,hashedPassword]
+  );
 
-        // hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
+  res.json({
+   message:"User registered successfully"
+  });
 
-        // insert user
-        db.query(
-          "INSERT INTO users (name,email,password) VALUES (?,?,?)",
-          [name, email, hashedPassword],
-          (err, result) => {
+ }catch(err){
 
-            if (err) {
-              console.log(err);
-              return res.status(500).json({ message: "Database error" });
-            }
+  console.log(err);
 
-            res.json({
-              message: "User registered successfully"
-            });
+  res.status(500).json({
+   message:"Server error"
+  });
 
-          }
-        );
-
-      }
-    );
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      message: "Server error"
-    });
-
-  }
+ }
 
 });
 
 /* -----------------------------
    LOGIN USER
 ------------------------------ */
-app.post("/login", (req, res) => {
 
-  const { email, password } = req.body;
+app.post("/login", async (req,res)=>{
 
-  if (!email || !password) {
-    return res.status(400).json({
-      message: "Email and password required"
-    });
+ const {email,password} = req.body;
+
+ if(!email || !password){
+  return res.status(400).json({
+   message:"Email and password required"
+  });
+ }
+
+ try{
+
+  const result = await db.query(
+   "SELECT * FROM users WHERE email=$1",
+   [email]
+  );
+
+  if(result.rows.length === 0){
+   return res.status(401).json({
+    message:"User not found"
+   });
   }
 
-  db.query(
-    "SELECT * FROM users WHERE email=?",
-    [email],
-    async (err, result) => {
+  const user = result.rows[0];
 
-      if (err) {
-        console.log(err);
-        return res.status(500).json({ message: "Database error" });
-      }
+  const match = await bcrypt.compare(password,user.password);
 
-      if (result.length === 0) {
-        return res.status(401).json({
-          message: "User not found"
-        });
-      }
+  if(!match){
+   return res.status(401).json({
+    message:"Invalid password"
+   });
+  }
 
-      const user = result[0];
+  /* CREATE JWT */
 
-      const match = await bcrypt.compare(password, user.password);
-
-      if (!match) {
-        return res.status(401).json({
-          message: "Invalid password"
-        });
-      }
-
-      // tạo JWT
-      const token = jwt.sign(
-        {
-          id: user.id,
-          email: user.email
-        },
-        JWT_SECRET,
-        {
-          expiresIn: "1h"
-        }
-      );
-
-      res.json({
-        message: "Login successful",
-        token
-      });
-
-    }
+  const token = jwt.sign(
+   {
+    id:user.id,
+    email:user.email
+   },
+   JWT_SECRET,
+   {
+    expiresIn:"1h"
+   }
   );
+
+  res.json({
+   message:"Login successful",
+   token
+  });
+
+ }catch(err){
+
+  console.log(err);
+
+  res.status(500).json({
+   message:"Server error"
+  });
+
+ }
 
 });
 
 /* -----------------------------
    START SERVER
 ------------------------------ */
-const PORT = process.env.PORT || 5001;
 
 app.listen(PORT,()=>{
  console.log("Auth Service running on port " + PORT);
